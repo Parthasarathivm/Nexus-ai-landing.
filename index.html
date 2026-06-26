@@ -1,457 +1,311 @@
 
-import React, { useState, useEffect, useMemo, useRef } from 'react';
-
-// ============================================================================
-// ICONS (Inline SVGs for guaranteed rendering)
-// ============================================================================
-const DatabaseIcon = ({ className = "w-6 h-6" }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 0v3.75m-16.5-3.75v3.75m16.5 0v3.75C20.25 16.153 16.556 18 12 18s-8.25-1.847-8.25-4.125v-3.75m16.5 0c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125" />
-  </svg>
-);
-
-const ZapIcon = ({ className = "w-6 h-6" }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
-  </svg>
-);
-
-const LockIcon = ({ className = "w-6 h-6" }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
-  </svg>
-);
-
-const SparklesIcon = ({ className = "w-6 h-6" }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z" />
-  </svg>
-);
-
-const ChevronIcon = ({ className = "w-5 h-5" }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
-  </svg>
-);
-
-const TerminalIcon = ({ className = "w-5 h-5" }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M8 9l3 3-3 3m5 0h3M4 6h16a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2z" />
-  </svg>
-);
-
-const CheckIcon = ({ className = "w-5 h-5" }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className={className}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-  </svg>
-);
-
-// ============================================================================
-// DATA SOURCES
-// ============================================================================
-const PRICING_DATA = {
-  monthly: {
-    starter: { INR: 999, USD: 12, EUR: 10 },
-    professional: { INR: 2499, USD: 29, EUR: 25 },
-    enterprise: { INR: 8999, USD: 99, EUR: 89 }
-  }
-};
-
-const FEATURES = [
-  {
-    id: 'feat-1',
-    title: 'Autonomous Data Parsing',
-    description: 'Instantly convert unstructured chaos into pristine, structured datasets using our proprietary LLM router. Supports PDF, CSV, JSON, and messy text.',
-    icon: <DatabaseIcon />,
-    bentoClasses: 'lg:col-span-2 lg:row-span-2',
-    stats: '99.9%',
-    statsLabel: 'Parsing Accuracy'
-  },
-  {
-    id: 'feat-2',
-    title: 'Real-time Sync',
-    description: 'Bi-directional synchronization with your data warehouse in milliseconds.',
-    icon: <ZapIcon />,
-    bentoClasses: 'lg:col-span-1 lg:row-span-1',
-    stats: '< 50ms',
-    statsLabel: 'Latency'
-  },
-  {
-    id: 'feat-3',
-    title: 'Enterprise Grade Security',
-    description: 'SOC2 Type II compliant. End-to-end encryption with BYOK support.',
-    icon: <LockIcon />,
-    bentoClasses: 'lg:col-span-1 lg:row-span-1',
-  },
-  {
-    id: 'feat-4',
-    title: 'Predictive Schema Evolution',
-    description: 'AI automatically detects upstream schema changes and intelligently adapts downstream pipelines without breaking transformations.',
-    icon: <SparklesIcon />,
-    bentoClasses: 'lg:col-span-3 lg:row-span-1',
-  }
-];
-
-// ============================================================================
-// STATE ENGINE (Pub/Sub for Pricing to prevent massive re-renders)
-// ============================================================================
-const pricingStore = {
-  currency: 'USD',
-  cycle: 'monthly',
-  listeners: new Set(),
-
-  subscribe(fn) {
-    this.listeners.add(fn);
-    return () => this.listeners.delete(fn);
-  },
-
-  notify() {
-    this.listeners.forEach((fn) => fn());
-  },
-
-  setCurrency(c) {
-    this.currency = c;
-    this.notify();
-  },
-
-  setCycle(c) {
-    this.cycle = c;
-    this.notify();
-  },
-
-  getState() {
-    return { currency: this.currency, cycle: this.cycle };
-  }
-};
-
-function usePricingState() {
-  const [state, setState] = useState(pricingStore.getState());
-  useEffect(() => pricingStore.subscribe(() => setState(pricingStore.getState())), []);
-  return state;
-}
-
-// ============================================================================
-// COMPONENTS
-// ============================================================================
-
-const Header = React.memo(() => {
-  const [scrolled, setScrolled] = useState(false);
-
-  useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 20);
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  return (
-    <header className={`fixed top-0 w-full z-40 transition-all duration-300 ${scrolled ? 'bg-black/50 backdrop-blur-xl border-b border-white/5 shadow-2xl' : 'bg-transparent'}`}>
-      <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-        <a href="#" className="flex items-center gap-2 group outline-none rounded-lg">
-          <div className="w-8 h-8 rounded bg-gradient-to-br from-white to-white/60 flex items-center justify-center text-black font-bold group-hover:scale-105 transition-transform">
-            N
-          </div>
-          <span className="text-white font-semibold text-xl tracking-tight">Nexus</span>
-        </a>
-        <nav className="hidden md:flex items-center gap-8">
-          {['Product', 'Solutions', 'Pricing'].map((item) => (
-            <a key={item} href={`#${item.toLowerCase()}`} className="text-sm font-medium text-gray-400 hover:text-white transition-colors px-2 py-1">
-              {item}
-            </a>
-          ))}
-        </nav>
-        <div className="flex items-center gap-4">
-          <button className="hidden md:block text-sm font-medium text-white hover:text-gray-300 transition-colors">Log in</button>
-          <button className="relative inline-flex h-10 items-center justify-center overflow-hidden rounded-full bg-white px-6 font-medium text-black transition-transform hover:scale-105 active:scale-95">
-            <span className="relative z-10">Start for free</span>
-            <div className="absolute inset-0 bg-gradient-to-r from-blue-200 to-purple-200 opacity-0 hover:opacity-100 transition-opacity duration-300" />
-          </button>
-        </div>
-      </div>
-    </header>
-  );
-});
-
-const HeroSection = () => {
-  return (
-    <section className="relative pt-40 pb-20 lg:pt-56 lg:pb-32 overflow-hidden flex flex-col items-center justify-center min-h-[90vh]">
-      {/* Animated Gradients using inline styles for preview compatibility */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-blue-600/20 blur-[100px] rounded-full mix-blend-screen pointer-events-none" />
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-purple-600/20 blur-[80px] rounded-full mix-blend-screen pointer-events-none" />
-      
-      <div className="relative z-10 max-w-5xl mx-auto px-6 text-center">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-sm text-gray-300 mb-8 backdrop-blur-md shadow-inner">
-          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-          Nexus 2.0 is now live
-        </div>
-        
-        <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold text-transparent bg-clip-text bg-gradient-to-b from-white to-gray-500 tracking-tighter mb-8 leading-[1.1]">
-          Data automation <br className="hidden md:block" />
-          at the speed of thought.
-        </h1>
-        
-        <p className="text-lg md:text-xl text-gray-400 max-w-2xl mx-auto mb-10 leading-relaxed">
-          Unify, transform, and route your data with zero-friction pipelines. 
-          Built for scale, engineered for performance, designed for humans.
-        </p>
-        
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-          <button className="w-full sm:w-auto h-12 px-8 rounded-full bg-white text-black font-semibold tracking-wide hover:scale-105 active:scale-95 transition-transform duration-200">
-            Get Started
-          </button>
-          <button className="w-full sm:w-auto h-12 px-8 rounded-full bg-white/5 border border-white/10 text-white font-semibold tracking-wide hover:bg-white/10 active:scale-95 transition-all duration-200 flex items-center justify-center gap-2">
-            <TerminalIcon />
-            Read Docs
-          </button>
-        </div>
-      </div>
-
-      {/* Terminal Mockup */}
-      <div className="relative mt-20 max-w-4xl mx-auto px-6 w-full">
-         <div className="rounded-2xl border border-white/10 bg-black/60 backdrop-blur-2xl shadow-2xl p-2 overflow-hidden">
-            <div className="h-8 flex items-center px-4 border-b border-white/10 gap-2">
-               <div className="w-3 h-3 rounded-full bg-red-500/80" />
-               <div className="w-3 h-3 rounded-full bg-yellow-500/80" />
-               <div className="w-3 h-3 rounded-full bg-green-500/80" />
-            </div>
-            <div className="h-48 md:h-64 bg-[#0a0a0a] rounded-b-xl p-6 md:p-8 flex flex-col gap-4 font-mono text-sm text-gray-400">
-               <div className="flex items-center gap-4">
-                  <span className="text-blue-400">nexus</span> config build --target production
-               </div>
-               <div className="text-gray-500">Compiling schema bindings...</div>
-               <div className="text-gray-500">Optimizing transformation graphs...</div>
-               <div className="text-emerald-400 mt-2 flex items-center gap-2">
-                  <CheckIcon className="w-4 h-4" /> Pipeline deployed successfully in 124ms.
-               </div>
-            </div>
-         </div>
-      </div>
-    </section>
-  );
-};
-
-const FeaturesSection = () => {
-  const [activeId, setActiveId] = useState('feat-3');
-
-  return (
-    <section id="features" className="py-24 relative z-10 border-t border-white/5">
-      <div className="max-w-7xl mx-auto px-6">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-5xl font-bold text-white tracking-tight mb-4">
-            Engineered for complexity. <br className="hidden md:block" />
-            Designed for simplicity.
-          </h2>
-          <p className="text-gray-400 text-lg max-w-2xl mx-auto">
-            Our architecture intuitively adapts to your data structures, eliminating manual mapping and brittle transformations.
-          </p>
-        </div>
-
-        {/* Desktop: CSS Grid | Mobile: Flex Accordion */}
-        <div className="flex flex-col lg:grid lg:grid-cols-3 lg:grid-rows-2 gap-4 lg:gap-6 auto-rows-[minmax(200px,auto)]">
-          {FEATURES.map((feature) => {
-            const isActive = activeId === feature.id;
-            return (
-              <div
-                key={feature.id}
-                onClick={() => setActiveId(isActive ? '' : feature.id)}
-                className={`
-                  group relative overflow-hidden rounded-3xl border transition-all duration-500 ease-[cubic-bezier(0.2,0.8,0.2,1)] cursor-pointer
-                  ${feature.bentoClasses}
-                  ${isActive 
-                    ? 'border-blue-500/50 bg-blue-900/10 shadow-[0_0_30px_rgba(59,130,246,0.1)]' 
-                    : 'border-white/10 bg-white/5 hover:bg-white/10'
-                  }
-                `}
-              >
-                <div className="p-6 md:p-8 flex flex-col h-full relative z-10">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-colors duration-300 ${isActive ? 'bg-blue-500/20 text-blue-400' : 'bg-white/10 text-gray-400'}`}>
-                      {feature.icon}
-                    </div>
-                    {/* Mobile Chevron */}
-                    <div className="lg:hidden text-gray-500">
-                      <ChevronIcon className={`transition-transform duration-300 ${isActive ? 'rotate-180 text-white' : ''}`} />
-                    </div>
-                  </div>
-
-                  <h3 className={`text-xl md:text-2xl font-semibold tracking-tight transition-colors duration-300 ${isActive ? 'text-white' : 'text-gray-200'}`}>
-                    {feature.title}
-                  </h3>
-
-                  {/* Accordion Expansion Logic */}
-                  <div className={`grid transition-all duration-500 ${isActive ? 'grid-rows-[1fr] opacity-100 mt-4' : 'grid-rows-[0fr] opacity-0 lg:grid-rows-[1fr] lg:opacity-70 lg:mt-4'}`}>
-                    <div className="overflow-hidden flex flex-col justify-between h-full">
-                      <p className="text-gray-400 text-sm md:text-base leading-relaxed">
-                        {feature.description}
-                      </p>
-                      
-                      {feature.stats && isActive && (
-                        <div className="mt-6 pt-6 border-t border-white/10 flex items-end gap-4">
-                          <div>
-                            <div className="text-3xl font-bold text-white mb-1">{feature.stats}</div>
-                            <div className="text-xs text-gray-500 uppercase tracking-wider font-semibold">{feature.statsLabel}</div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    </section>
-  );
-};
-
-const PricingToggle = React.memo(() => {
-  const { cycle, currency } = usePricingState();
-
-  return (
-    <div className="flex flex-col items-center gap-6 mb-16">
-      {/* Billing Cycle Toggle */}
-      <div className="flex items-center p-1 rounded-full bg-white/5 border border-white/10 relative">
-        <div 
-          className="absolute top-1 bottom-1 w-[calc(50%-4px)] bg-white rounded-full shadow-sm transition-transform duration-300 ease-out"
-          style={{ transform: cycle === 'monthly' ? 'translateX(4px)' : 'translateX(calc(100% + 4px))' }}
-        />
-        {['monthly', 'annual'].map((c) => (
-          <button
-            key={c}
-            onClick={() => pricingStore.setCycle(c)}
-            className={`relative z-10 w-32 py-2 text-sm font-medium transition-colors duration-300 rounded-full ${cycle === c ? 'text-black' : 'text-gray-400 hover:text-white'}`}
-          >
-            {c.charAt(0).toUpperCase() + c.slice(1)}
-            {c === 'annual' && <span className="absolute -top-3 -right-2 bg-emerald-500/20 text-emerald-400 text-[10px] px-2 py-0.5 rounded-full border border-emerald-500/20">Save 20%</span>}
-          </button>
-        ))}
-      </div>
-
-      {/* Currency Switcher */}
-      <div className="flex items-center gap-2">
-        {['USD', 'EUR', 'INR'].map((curr) => (
-          <button
-            key={curr}
-            onClick={() => pricingStore.setCurrency(curr)}
-            className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${currency === curr ? 'bg-white/20 text-white border border-white/30' : 'bg-transparent text-gray-500 border border-transparent hover:text-gray-300 hover:bg-white/5'}`}
-          >
-            {curr}
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-});
-
-const PriceDisplay = React.memo(({ tierKey }) => {
-  const { currency, cycle } = usePricingState();
-  const basePrice = PRICING_DATA.monthly[tierKey][currency];
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nexus AI - Premium Data Automation</title>
   
-  // 20% Discount for Annual
-  const calculatedPrice = useMemo(() => {
-    if (cycle === 'annual') return Math.floor((basePrice * 12 * 0.8) / 12); 
-    return basePrice;
-  }, [basePrice, cycle]);
-
-  const symbol = currency === 'USD' ? '$' : currency === 'EUR' ? '€' : '₹';
-
-  return (
-    <div className="my-6">
-      <div className="flex items-baseline text-5xl font-bold text-white tracking-tighter">
-        <span className="text-3xl text-gray-400 mr-1">{symbol}</span>
-        {calculatedPrice.toLocaleString()}
-        <span className="text-lg text-gray-500 font-medium ml-2">/mo</span>
-      </div>
-      <div className="text-sm text-gray-500 mt-2 h-5">
-        {cycle === 'annual' ? `Billed annually (${symbol}${(calculatedPrice * 12).toLocaleString()}/yr)` : 'Billed monthly'}
-      </div>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Ultra-reliable CDNs for React and Babel -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js" crossorigin></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.6/babel.min.js"></script>
+</head>
+<body class="bg-[#050505] text-white antialiased selection:bg-blue-500/30">
+  
+  <div id="root">
+    <div style="height: 100vh; display: flex; align-items: center; justify-content: center; font-family: sans-serif; color: #666;">
+      Loading Nexus AI...
     </div>
-  );
-});
+  </div>
 
-const PricingCard = React.memo(({ tierKey, title, description, features, highlighted = false }) => {
-  return (
-    <div className={`relative p-8 rounded-3xl border flex flex-col ${highlighted ? 'bg-blue-900/10 border-blue-500/50 shadow-2xl' : 'bg-white/5 border-white/10'}`}>
-      {highlighted && <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-blue-400 to-transparent" />}
-      
-      <h3 className="text-xl font-semibold text-white">{title}</h3>
-      <p className="text-sm text-gray-400 mt-2">{description}</p>
-      
-      <PriceDisplay tierKey={tierKey} />
+  <!-- ONLY using the 'react' preset to guarantee it works on all mobile browsers -->
+  <script type="text/babel" data-presets="react">
+    const { useState, useEffect, useMemo } = React;
 
-      <button className={`w-full py-3 rounded-xl font-medium transition-all mb-8 ${highlighted ? 'bg-white text-black hover:bg-gray-200' : 'bg-white/10 text-white hover:bg-white/20'}`}>
-        Get Started
-      </button>
+    // ============================================================================
+    // ICONS
+    // ============================================================================
+    const DatabaseIcon = ({ className = "w-6 h-6" }) => (
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className={className}><path strokeLinecap="round" strokeLinejoin="round" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 0v3.75m-16.5-3.75v3.75m16.5 0v3.75C20.25 16.153 16.556 18 12 18s-8.25-1.847-8.25-4.125v-3.75m16.5 0c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125" /></svg>
+    );
+    const ZapIcon = ({ className = "w-6 h-6" }) => (
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className={className}><path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" /></svg>
+    );
+    const LockIcon = ({ className = "w-6 h-6" }) => (
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className={className}><path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" /></svg>
+    );
+    const SparklesIcon = ({ className = "w-6 h-6" }) => (
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className={className}><path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z" /></svg>
+    );
+    const ChevronIcon = ({ className = "w-5 h-5" }) => (
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className={className}><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
+    );
+    const TerminalIcon = ({ className = "w-5 h-5" }) => (
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className={className}><path strokeLinecap="round" strokeLinejoin="round" d="M8 9l3 3-3 3m5 0h3M4 6h16a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2z" /></svg>
+    );
+    const CheckIcon = ({ className = "w-5 h-5" }) => (
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" className={className}><path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+    );
 
-      <ul className="space-y-4 flex-1">
-        {features.map((feat, i) => (
-          <li key={i} className="flex items-start gap-3 text-sm text-gray-300">
-            <CheckIcon className="w-5 h-5 text-blue-400 shrink-0" />
-            {feat}
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-});
+    // ============================================================================
+    // DATA & STATE
+    // ============================================================================
+    const PRICING_DATA = {
+      monthly: {
+        starter: { INR: 999, USD: 12, EUR: 10 },
+        professional: { INR: 2499, USD: 29, EUR: 25 },
+        enterprise: { INR: 8999, USD: 99, EUR: 89 }
+      }
+    };
 
-const PricingSection = () => {
-  return (
-    <section id="pricing" className="py-24 relative z-10 bg-black/50 border-t border-white/5">
-      <div className="max-w-7xl mx-auto px-6">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-5xl font-bold text-white tracking-tight mb-4">
-            Transparent, predictable pricing.
-          </h2>
-          <p className="text-gray-400 text-lg">Scale your data infrastructure without scaling your costs.</p>
+    const FEATURES = [
+      {
+        id: 'feat-1',
+        title: 'Autonomous Data Parsing',
+        description: 'Instantly convert unstructured chaos into pristine datasets using our proprietary LLM router.',
+        icon: <DatabaseIcon />,
+        bentoClasses: 'lg:col-span-2 lg:row-span-2',
+      },
+      {
+        id: 'feat-2',
+        title: 'Real-time Sync',
+        description: 'Bi-directional synchronization with your data warehouse in milliseconds.',
+        icon: <ZapIcon />,
+        bentoClasses: 'lg:col-span-1 lg:row-span-1',
+      },
+      {
+        id: 'feat-3',
+        title: 'Enterprise Security',
+        description: 'SOC2 Type II compliant. End-to-end encryption with BYOK support.',
+        icon: <LockIcon />,
+        bentoClasses: 'lg:col-span-1 lg:row-span-1',
+      },
+      {
+        id: 'feat-4',
+        title: 'Predictive Schema Evolution',
+        description: 'AI automatically detects upstream schema changes and intelligently adapts downstream pipelines.',
+        icon: <SparklesIcon />,
+        bentoClasses: 'lg:col-span-3 lg:row-span-1',
+      }
+    ];
+
+    // Global Pricing State Engine
+    const pricingStore = {
+      currency: 'USD',
+      cycle: 'monthly',
+      listeners: new Set(),
+      subscribe(fn) {
+        this.listeners.add(fn);
+        return () => this.listeners.delete(fn);
+      },
+      notify() { this.listeners.forEach(fn => fn()); },
+      setCurrency(c) { this.currency = c; this.notify(); },
+      setCycle(c) { this.cycle = c; this.notify(); },
+      getState() { return { currency: this.currency, cycle: this.cycle }; }
+    };
+
+    function usePricingState() {
+      const [state, setState] = useState(pricingStore.getState());
+      useEffect(() => {
+        const unsubscribe = pricingStore.subscribe(() => setState(pricingStore.getState()));
+        return unsubscribe;
+      }, []);
+      return state;
+    }
+
+    // ============================================================================
+    // COMPONENTS
+    // ============================================================================
+    const PricingToggle = () => {
+      const { cycle, currency } = usePricingState();
+      return (
+        <div className="flex flex-col items-center gap-6 mb-16">
+          <div className="flex items-center p-1 rounded-full bg-white/5 border border-white/10 relative overflow-hidden">
+            <div 
+              className="absolute top-1 bottom-1 w-[calc(50%-4px)] bg-white rounded-full transition-transform duration-300 ease-out"
+              style={{ transform: cycle === 'monthly' ? 'translateX(4px)' : 'translateX(calc(100% + 4px))' }}
+            ></div>
+            {['monthly', 'annual'].map((c) => (
+              <button
+                key={c}
+                onClick={() => pricingStore.setCycle(c)}
+                className={`relative z-10 w-32 py-2 text-sm font-medium transition-colors duration-300 rounded-full ${cycle === c ? 'text-black' : 'text-gray-400 hover:text-white'}`}
+              >
+                {c.charAt(0).toUpperCase() + c.slice(1)}
+                {c === 'annual' && <span className="absolute -top-3 -right-2 bg-emerald-500/20 text-emerald-400 text-[10px] px-2 py-0.5 rounded-full border border-emerald-500/20">Save 20%</span>}
+              </button>
+            ))}
+          </div>
+          <div className="flex items-center gap-2">
+            {['USD', 'EUR', 'INR'].map((curr) => (
+              <button
+                key={curr}
+                onClick={() => pricingStore.setCurrency(curr)}
+                className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${currency === curr ? 'bg-white/20 text-white border border-white/30' : 'bg-transparent text-gray-500 border border-transparent hover:text-gray-300 hover:bg-white/5'}`}
+              >
+                {curr}
+              </button>
+            ))}
+          </div>
         </div>
+      );
+    };
 
-        <PricingToggle />
+    const PriceDisplay = ({ tierKey }) => {
+      const { currency, cycle } = usePricingState();
+      const basePrice = PRICING_DATA.monthly[tierKey][currency];
+      const calculatedPrice = cycle === 'annual' ? Math.floor((basePrice * 12 * 0.8) / 12) : basePrice;
+      const symbol = currency === 'USD' ? '$' : currency === 'EUR' ? '€' : '₹';
 
-        <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-          <PricingCard
-            tierKey="starter"
-            title="Starter"
-            description="Perfect for indie hackers and small startups."
-            features={['1M rows processed/mo', 'Basic Transformations', 'Community Support', '48hr Retention']}
-          />
-          <PricingCard
-            tierKey="professional"
-            title="Professional"
-            description="For growing teams with complex data needs."
-            highlighted={true}
-            features={['50M rows processed/mo', 'Advanced ML Routing', 'Priority Email Support', '30-day Retention', 'Custom Integrations']}
-          />
-          <PricingCard
-            tierKey="enterprise"
-            title="Enterprise"
-            description="Uncapped performance for global scale."
-            features={['Unlimited processing', 'Dedicated VPC', '24/7 Phone Support', 'SOC2 / HIPAA Compliance', 'SLA Guarantee']}
-          />
+      return (
+        <div className="my-6">
+          <div className="flex items-baseline text-4xl md:text-5xl font-bold text-white tracking-tighter transition-all">
+            <span className="text-2xl md:text-3xl text-gray-400 mr-1">{symbol}</span>
+            {calculatedPrice.toLocaleString()}
+            <span className="text-base md:text-lg text-gray-500 font-medium ml-2">/mo</span>
+          </div>
+          <div className="text-sm text-gray-500 mt-2 h-5">
+            {cycle === 'annual' ? `Billed annually (${symbol}${(calculatedPrice * 12).toLocaleString()}/yr)` : 'Billed monthly'}
+          </div>
         </div>
-      </div>
-    </section>
-  );
-};
+      );
+    };
 
-const Footer = () => (
-  <footer className="border-t border-white/10 pt-20 pb-10 bg-[#050505]">
-    <div className="max-w-7xl mx-auto px-6 text-center text-gray-600 text-sm">
-      <p>© 2026 Nexus Data Systems Inc. All rights reserved.</p>
-    </div>
-  </footer>
-);
+    // ============================================================================
+    // MAIN APP
+    // ============================================================================
+    function App() {
+      const [activeId, setActiveId] = useState('feat-3');
+      const [scrolled, setScrolled] = useState(false);
 
-export default function App() {
-  return (
-    <div className="min-h-screen bg-[#050505] text-white font-sans selection:bg-blue-500/30">
-      <Header />
-      <main>
-        <HeroSection />
-        <FeaturesSection />
-        <PricingSection />
-      </main>
-      <Footer />
-    </div>
-  );
-}
+      useEffect(() => {
+        const handleScroll = () => setScrolled(window.scrollY > 20);
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+      }, []);
+
+      return (
+        <div className="min-h-screen font-sans overflow-x-hidden">
+          
+          <header className={`fixed top-0 w-full z-40 transition-all duration-300 ${scrolled ? 'bg-black/80 backdrop-blur-md border-b border-white/10 py-4' : 'bg-transparent py-6'}`}>
+            <div className="max-w-7xl mx-auto px-6 flex justify-between items-center">
+              <div className="text-white font-bold text-xl flex items-center gap-2">
+                <div className="w-8 h-8 bg-white text-black flex items-center justify-center rounded">N</div> Nexus
+              </div>
+              <button className="bg-white text-black px-5 py-2 md:px-6 md:py-2.5 rounded-full font-medium active:scale-95 transition-transform text-sm">
+                Start for free
+              </button>
+            </div>
+          </header>
+
+          <section className="relative pt-40 pb-20 md:pt-48 md:pb-32 px-6 flex flex-col items-center text-center">
+            <div className="absolute top-40 left-1/2 -translate-x-1/2 w-[300px] md:w-[600px] h-[300px] md:h-[600px] bg-blue-600/30 blur-[100px] rounded-full pointer-events-none"></div>
+            
+            <div className="relative z-10 max-w-4xl mx-auto mt-10 md:mt-0">
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs md:text-sm text-gray-300 mb-8 backdrop-blur-md">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Nexus 2.0 is Live
+              </div>
+              
+              <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold mb-6 tracking-tighter leading-[1.1]">
+                Data automation <br className="hidden md:block" /> at the speed of thought.
+              </h1>
+              
+              <p className="text-base md:text-xl text-gray-400 mb-10 max-w-2xl mx-auto leading-relaxed">
+                Unify, transform, and route your data with zero-friction pipelines. Built for scale, designed for humans.
+              </p>
+              
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full sm:w-auto px-2 sm:px-0">
+                <button className="w-full sm:w-auto h-14 px-8 rounded-full bg-white text-black font-semibold active:scale-95 transition-transform text-base md:text-lg">
+                  Deploy Now
+                </button>
+                <button className="w-full sm:w-auto h-14 px-8 rounded-full bg-white/5 border border-white/10 text-white font-semibold active:scale-95 transition-transform flex items-center justify-center gap-2 text-base md:text-lg">
+                  <TerminalIcon /> Documentation
+                </button>
+              </div>
+            </div>
+          </section>
+
+          <section className="py-20 md:py-24 px-6 max-w-7xl mx-auto relative z-10">
+            <h2 className="text-3xl md:text-5xl font-bold text-center mb-12 md:mb-16 tracking-tight">Engineered for complexity.</h2>
+            <div className="flex flex-col lg:grid lg:grid-cols-3 lg:grid-rows-2 gap-4 lg:gap-6">
+              {FEATURES.map((feature) => {
+                const isActive = activeId === feature.id;
+                return (
+                  <div
+                    key={feature.id}
+                    onClick={() => setActiveId(isActive ? '' : feature.id)}
+                    className={`cursor-pointer group relative overflow-hidden rounded-3xl border transition-all duration-300 p-6 md:p-8 ${feature.bentoClasses} ${isActive ? 'border-blue-500/50 bg-blue-900/10' : 'border-white/10 bg-white/5'}`}
+                  >
+                    <div className="flex justify-between items-center mb-4">
+                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-colors ${isActive ? 'bg-blue-500/20 text-blue-400' : 'bg-white/10 text-gray-400'}`}>
+                        {feature.icon}
+                      </div>
+                      <div className="lg:hidden text-gray-500">
+                        <ChevronIcon className={`transition-transform duration-300 ${isActive ? 'rotate-180 text-white' : ''}`} />
+                      </div>
+                    </div>
+                    <h3 className={`text-xl md:text-2xl font-semibold mb-2 transition-colors ${isActive ? 'text-white' : 'text-gray-300'}`}>{feature.title}</h3>
+                    
+                    <div className={`grid transition-all duration-300 ${isActive ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0 lg:grid-rows-[1fr] lg:opacity-70'}`}>
+                      <div className="overflow-hidden">
+                        <p className="text-gray-400 mt-2 text-sm md:text-base">{feature.description}</p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+
+          <section className="py-20 md:py-24 px-6 max-w-7xl mx-auto border-t border-white/5 relative z-10">
+            <h2 className="text-3xl md:text-5xl font-bold text-center mb-10 md:mb-12 tracking-tight">Predictable pricing.</h2>
+            
+            <PricingToggle />
+            
+            <div className="grid md:grid-cols-3 gap-6 md:gap-8 max-w-5xl mx-auto">
+              {[
+                { key: 'starter', title: 'Starter', desc: 'For indie hackers.', feats: ['1M rows/mo', 'Basic Routing', 'Community Support'] },
+                { key: 'professional', title: 'Professional', desc: 'For growing teams.', feats: ['50M rows/mo', 'Advanced ML Routing', 'Priority Support'], hl: true },
+                { key: 'enterprise', title: 'Enterprise', desc: 'Global scale.', feats: ['Unlimited processing', 'Dedicated VPC', 'SOC2 Compliance'] }
+              ].map(tier => (
+                <div key={tier.key} className={`relative p-6 md:p-8 rounded-3xl border flex flex-col ${tier.hl ? 'bg-blue-900/10 border-blue-500/50 shadow-2xl' : 'bg-white/5 border-white/10'}`}>
+                  <h3 className="text-xl font-semibold text-white">{tier.title}</h3>
+                  <p className="text-sm text-gray-400 mt-2">{tier.desc}</p>
+                  
+                  <PriceDisplay tierKey={tier.key} />
+                  
+                  <button className={`w-full py-3.5 rounded-xl font-medium mb-8 transition-colors ${tier.hl ? 'bg-white text-black' : 'bg-white/10 text-white'}`}>
+                    Get Started
+                  </button>
+                  
+                  <ul className="space-y-4 flex-1">
+                    {tier.feats.map((feat, i) => (
+                      <li key={i} className="flex items-start gap-3 text-sm text-gray-300">
+                        <CheckIcon className="w-5 h-5 text-blue-400 shrink-0" /> {feat}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <footer className="border-t border-white/10 pt-10 pb-12 text-center text-sm text-gray-600 relative z-10">
+             © 2026 Nexus Data Systems Inc. Built for the Hackathon.
+          </footer>
+
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
+
+
